@@ -40,3 +40,7 @@ PERCENT_TRAIN = 0.70
 PERCENT_TEST = 0.30
 
 NUM_NEIGHBORS = 8
+# Changing this led to slight changes
+
+POPULAR_SONG_THRESHOLD = 0.6
+# NOTE: Changing this doesn't seem to affect anything

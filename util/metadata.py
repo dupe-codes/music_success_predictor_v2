@@ -87,6 +87,30 @@ class MetadataUtil(object):
                 song_artist = song[1]['artist']
                 if artist_name == song_artist: pass
 
+    def get_num_popular_songs(self, artist_name=None):
+        """ Returns number of popular songs for the given artist """
+        if not self.use_json:
+            artist_name = artist_name.replace("'", "''").encode('utf-8')
+            query = ' '.join([
+                'SELECT song_hotttnesss FROM',
+                settings.OURDATA_TABLE,
+                'WHERE artist_name=\'{}\''.format(artist_name),
+                'AND',
+                'song_hotttnesss > {}'.format(settings.POPULAR_SONG_THRESHOLD)
+            ])
+            response = self.db.execute(query)
+            results = response.fetchall()
+            return len(results)
+        else:
+            song_data = self._load_json_data()['song_data']
+            num_popular = 0
+            for song in song_data:
+                if song[1]['artist'] == artist_name:
+                    song_hotttnesss = song[2]
+                    if song_hotttnesss >= settings.POPULAR_SONG_THRESHOLD:
+                        num_popular += 1
+            return num_popular
+
     def _load_json_data(self):
         """ Returns song data loaded from the json file """
         with open(settings.JSON_DATA_PATH, 'r') as data:
