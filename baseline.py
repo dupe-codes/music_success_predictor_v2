@@ -10,16 +10,19 @@ import config.settings as settings
 from util.metadata import MetadataUtil
 from util.analysis import AnalysisUtil
 
+
 def train_model(linear_reg, train_set, artist_mapping, num_artists):
     """ Trains the linear regression model on simply artist indicator vars """
-    inputs = [MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists) for data in train_set]
-    outputs = [data[settings.HOTTTNESSS_INDEX] for data in train_set]
+    inputs = [MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=True) for data in train_set]
+    #outputs = [data[settings.HOTTTNESSS_INDEX] for data in train_set]
+    outputs = [song[2] for song in train_set]
     linear_reg.fit(np.array(inputs), np.array(outputs))
 
 def test_model(linear_reg, test_set, artist_mapping, num_artists):
     """ Tests the linear regression model """
-    inputs = [MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists) for data in test_set]
-    expected = [data[settings.HOTTTNESSS_INDEX] for data in test_set]
+    inputs = [MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=True) for data in test_set]
+    #expected = [data[settings.HOTTTNESSS_INDEX] for data in test_set]
+    expected = [song[2] for song in test_set]
 
     results = linear_reg.predict(np.array(inputs))
     rsquared_score = linear_reg.score(np.array(inputs), np.array(expected))
@@ -30,7 +33,7 @@ def run_baseline():
     """ Runs a simple linear regression model for prediction """
 
     print 'Preparing data...'
-    util = MetadataUtil()
+    util = MetadataUtil(use_json=True)
     training_set, testing_set = util.get_datasets()
     artist_mapping, num_artists = util.get_artist_feature_info()
 
