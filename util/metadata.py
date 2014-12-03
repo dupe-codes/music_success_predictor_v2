@@ -96,3 +96,14 @@ class MetadataUtil(object):
                 feature_vector[artist_mapping[artist_name]] = 1
 
         return feature_vector
+
+    @classmethod
+    def prepare_metadata_features(cls, data, use_json=False):
+        result = []
+        if use_json:
+            feature_dict = data[1]
+            for feature, value in feature_dict.iteritems():
+                if feature != 'artist' and feature != 'genre':
+                    if value is None: value = 0
+                    result.append(value)
+        return result
