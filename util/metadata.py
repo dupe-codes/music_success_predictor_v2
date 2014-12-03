@@ -69,14 +69,23 @@ class MetadataUtil(object):
 
     def get_artist_lifespan(self, artist_name=None, artist_id=None):
         """ Gets the lifespan of a given artist """
-        query = ' '.join(['SELECT year FROM', settings.OURDATA_TABLE, 'WHERE artist_name={}'.format(artist_name)])
-        response = self.db.execute(query)
-        results = response.fetchall()
-        results = [x[0] for x in results if x[0] != 0]
+        if not self.use_json:
+            artist_name = artist_name.replace("'", "''").encode('utf-8')
+            query = ' '.join(['SELECT year FROM', settings.OURDATA_TABLE, 'WHERE artist_name=\'{}\''.format(artist_name)])
+            response = self.db.execute(query)
+            results = response.fetchall()
+            results = [x[0] for x in results if x[0] != 0]
 
-        min_year = min(results)
-        max_year = max(results)
-        return max_year - min_year
+            if not results: return 0
+            min_year = min(results)
+            max_year = max(results)
+            return max_year - min_year
+        else:
+            return 0 # Oops, we aren't saving the year in the json data...
+            song_data = self._load_json_data()['song_data']
+            for song in song_data:
+                song_artist = song[1]['artist']
+                if artist_name == song_artist: pass
 
     def _load_json_data(self):
         """ Returns song data loaded from the json file """
@@ -106,4 +115,7 @@ class MetadataUtil(object):
                 if feature != 'artist' and feature != 'genre':
                     if value is None: value = 0
                     result.append(value)
+        else:
+            for index in settings.FEATURE_INDICES:
+                result.append(data[index])
         return result

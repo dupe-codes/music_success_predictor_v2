@@ -32,3 +32,4 @@ class AnalysisUtil(object):
                 numCorrect += 1
 
         return 100*(float(numCorrect)/len(self.predicted))
+
