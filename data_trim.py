@@ -51,6 +51,7 @@ def migrate_songs(metadata_db, possible_songs):
 
     result_db = sqlite3.connect(settings.SONGS_DB)
     cursor = result_db.cursor()
+    numAdded = 0
     for song in all_songs:
         if (song[0],) in possible_songs:
             song_hotttnesss = get_song_hotttnesss(song[1], song[6])
@@ -70,12 +71,14 @@ def migrate_songs(metadata_db, possible_songs):
             query = ' '.join(['INSERT INTO', settings.OURDATA_TABLE, 'VALUES', values])
             print 'Insert Query: {query}'.format(query=query)
             response = cursor.execute(query)
-            print 'Stuck song with id {id} and hotttnesss {hottness} into db'.format(
+            numAdded += 1
+            print 'Stuck song with id {id} and hotttnesss {hottness} into db. {num} songs now in db.'.format(
                 id=song[0],
-                hottness=song_hotttnesss
+                hottness=song_hotttnesss,
+                num=numAdded
             )
+            result_db.commit() # COMMIT AFTER EACH ADDITION!
 
-    result_db.commit()
     result_db.disconnect()
     print 'done!'
 
