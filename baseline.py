@@ -22,22 +22,29 @@ def test_model(linear_reg, test_set, artist_mapping, num_artists):
     expected = [data[settings.HOTTTNESSS_INDEX] for data in test_set]
 
     results = linear_reg.predict(np.array(inputs))
-    return results, expected
+    rsquared_score = linear_reg.score(np.array(inputs), np.array(expected))
+    return results, expected, rsquared_score
 
 
 def run_baseline():
     """ Runs a simple linear regression model for prediction """
+
+    print 'Preparing data...'
     util = MetadataUtil()
     training_set, testing_set = util.get_datasets()
-    artist_mapping, num_artists = util.get_artist_features_info()
+    artist_mapping, num_artists = util.get_artist_feature_info()
 
+    print 'Training linear model...'
     linear_reg = linear_model.LinearRegression()
     train_model(linear_reg, training_set, artist_mapping, num_artists)
-    predicted, expected = test_model(linear_reg, testing_set, artist_mapping, num_artists)
+
+    print 'Testing linear model...'
+    predicted, expected, rsquared = test_model(linear_reg, testing_set, artist_mapping, num_artists)
 
     analysis = AnalysisUtil(predicted, expected)
-    accuracy = AnalysisUtil.percentage_accurracy()
+    accuracy = analysis.percentage_accuracy()
     print 'Baseline predictor achieved accuracy of {}%'.format(accuracy)
+    print 'R^2 score calculated by sklearn: {}'.format(rsquared)
 
     util.__teardown__()
 
