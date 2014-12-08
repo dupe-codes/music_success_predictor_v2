@@ -111,6 +111,14 @@ class MetadataUtil(object):
                         num_popular += 1
             return num_popular
 
+    def get_genre_counts(self):
+        song_data = self._load_json_data()['song_data']
+        genre_counts = {genre: 0 for genre in settings.GENRES}
+        for song in song_data:
+            genre = song[1]['genre']
+            genre_counts[genre] += 1
+        return genre_counts
+
     def _load_json_data(self):
         """ Returns song data loaded from the json file """
         with open(settings.JSON_DATA_PATH, 'r') as data:

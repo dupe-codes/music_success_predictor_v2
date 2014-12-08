@@ -24,6 +24,16 @@ FEATURE_INDICES = [
     10,
 ]
 
+"""
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+]
+"""
+
 SONG_FEATURES = [
     'tempo',
     'danceability',
@@ -44,3 +54,35 @@ NUM_NEIGHBORS = 8
 
 POPULAR_SONG_THRESHOLD = 0.6
 # NOTE: Changing this doesn't seem to affect anything
+
+GENRES = [
+    'rap',
+    'rock',
+    'country',
+    'hip hop',
+    'indie rock',
+    'pop',
+    'r&b',
+    'folk',
+    'funk',
+    'pop house',
+    'pop rap',
+    'power pop',
+    'alternative hip hop',
+    'alternative pop',
+    'alternative r&b',
+    'alternative rock',
+    'broadway',
+    'christmas',
+    'classic rock',
+    'country blues',
+    'country rock',
+    'deep alternative r&b',
+    'hard rock',
+    'indie pop',
+    'jazz',
+    'metal',
+    'pop',
+    'pop rock',
+    'progressive metal',
+]

@@ -11,7 +11,7 @@ from util.analysis import AnalysisUtil
 
 settings.USE_ARTIST_LIFESPAN = False
 
-def train_model(neighbors_model, training_set, util):
+def train_model(neighbors_model, training_set, util, get_train_error=False):
     # Grab info for artist indicator features
     artist_mapping, num_artists = util.get_artist_feature_info()
 
@@ -30,6 +30,15 @@ def train_model(neighbors_model, training_set, util):
         outputs = [data[settings.HOTTTNESSS_INDEX] for data in training_set]
 
     neighbors_model.fit(np.array(inputs), np.array(outputs))
+
+    results = None
+    expected = None
+    rsquared_score = None
+    if get_train_error:
+        results = neighbors_model.predict(np.array(inputs))
+        rsquared_score = neighbors_model.score(np.array(inputs), np.array(outputs))
+        expected = outputs
+    return results, expected, rsquared_score
 
 def test_model(neighbors_model, testing_data, util):
     artist_mapping, num_artists = util.get_artist_feature_info()
@@ -56,11 +65,11 @@ def run_basic_features():
     """ Runs a k nearest neighbors model on basic metadata features """
 
     print 'Preparing data with basic features...'
-    util = MetadataUtil(use_json=True)
+    util = MetadataUtil(use_json=False)
     training_set, testing_set = util.get_datasets()
 
     print 'Training neighbors model...'
-    neighbors_model = KNeighborsRegressor(n_neighbors=settings.NUM_NEIGHBORS)
+    neighbors_model = KNeighborsRegressor(n_neighbors=settings.NUM_NEIGHBORS, weights='distance')
     train_model(neighbors_model, training_set, util)
 
     print 'Testing neighbors model...'
@@ -82,8 +91,13 @@ def run_features_with_lifespans():
     training_set, testing_set = util.get_datasets()
 
     print 'Training k nearest neighbors model...'
-    neighbors_model = KNeighborsRegressor(n_neighbors=settings.NUM_NEIGHBORS)
-    train_model(neighbors_model, training_set, util)
+    neighbors_model = KNeighborsRegressor(n_neighbors=settings.NUM_NEIGHBORS, weights='distance')
+    train_predicted, train_expected, train_rscore = train_model(neighbors_model, training_set, util, get_train_error=True)
+
+    analysis = AnalysisUtil(train_predicted, train_expected)
+    accuracy = analysis.percentage_accuracy()
+    print '\nPredictor achieved a training error of {}'.format(accuracy)
+    print '\nR^2 score calculated by sklearn: {}'.format(train_rscore)
 
     print 'Testing neighbors model...'
     predicted, expected, rsquared = test_model(neighbors_model, testing_set, util)

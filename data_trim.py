@@ -19,7 +19,7 @@ def load_songs_with_lyrics(lyrics_db):
     songs = response.fetchall()
     return songs
 
-def get_song_hotttnesss(song_name, artist_name):
+def get_metadata(song_name, artist_name):
 
     try:
         song_results = SongAPI.search(artist=artist_name, title=song_name)
@@ -41,7 +41,23 @@ def get_song_hotttnesss(song_name, artist_name):
         print 'Awake'
         song_hotttnesss = song_info.get_song_hotttnesss()
 
-    return song_hotttnesss
+    try:
+        audio_summary = song_info.get_audio_summary()
+    except:
+        print 'I\'m sleepin!'
+        time.sleep(60)
+        print 'Awake!'
+        audio_summary = song_info.get_audio_summary()
+
+    return (
+        song_hotttnesss,
+        audio_summary['tempo'],
+        audio_summary['danceability'],
+        audio_summary['energy'],
+        audio_summary['loudness'],
+        audio_summary['key'],
+        audio_summary['time_signature']
+    )
 
 def migrate_songs(metadata_db, possible_songs):
     query = ' '.join(['SELECT * FROM', settings.SONGDATA_TABLE])
@@ -54,9 +70,17 @@ def migrate_songs(metadata_db, possible_songs):
     numAdded = 0
     for song in all_songs:
         if (song[0],) in possible_songs:
-            song_hotttnesss = get_song_hotttnesss(song[1], song[6])
-            if not song_hotttnesss: continue
-            song = song + (song_hotttnesss,)
+
+            query = ' '.join(['SELECT track_id FROM', settings.OURDATA_TABLE, 'WHERE track_id=\'{}\''.format(str(song[0]))])
+            response = result_db.execute(query)
+            in_db = response.fetchall()
+            if in_db:
+                print 'Song with track id {} already in database, continuing...'.format(song[0])
+                continue
+
+            metadata = get_metadata(song[1], song[6])
+            if not metadata: continue
+            song = song + metadata
 
             values = '('
             for index, value in enumerate(song):
@@ -74,7 +98,7 @@ def migrate_songs(metadata_db, possible_songs):
             numAdded += 1
             print 'Stuck song with id {id} and hotttnesss {hottness} into db. {num} songs now in db.'.format(
                 id=song[0],
-                hottness=song_hotttnesss,
+                hottness=metadata[0],
                 num=numAdded
             )
             result_db.commit() # COMMIT AFTER EACH ADDITION!

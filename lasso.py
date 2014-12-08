@@ -2,8 +2,8 @@
 Implements linear regression with L1 penalty
 """
 
-#from sklearn.linear_model import Lasso
-from sklearn.linear_model import LinearRegression as Lasso
+from sklearn.linear_model import Lasso
+#from sklearn.linear_model import LinearRegression as Lasso
 import numpy as np
 
 import config.settings as settings
@@ -13,7 +13,7 @@ from util.analysis import AnalysisUtil
 settings.USE_ARTIST_LIFESPAN = False
 settings.USE_NUM_POPULAR = False
 
-def train_model(lasso_model, training_set, util):
+def train_model(lasso_model, training_set, util, get_train_error=False):
     # Grab info for artist indicator features
     artist_mapping, num_artists = util.get_artist_feature_info()
 
@@ -22,8 +22,10 @@ def train_model(lasso_model, training_set, util):
     for data in training_set:
         feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
         feature_vector += MetadataUtil.prepare_metadata_features(data, use_json=util.use_json)
+
         if settings.USE_ARTIST_LIFESPAN:
             feature_vector.append(util.get_artist_lifespan(artist_name=data[settings.ARTIST_NAME_INDEX]))
+
         if settings.USE_NUM_POPULAR:
             if not util.use_json:
                 feature_vector.append(util.get_num_popular_songs(artist_name=data[settings.ARTIST_NAME_INDEX]))
@@ -39,6 +41,16 @@ def train_model(lasso_model, training_set, util):
 
     lasso_model.fit(np.array(inputs), np.array(outputs))
 
+    # Run on training data to get training error
+    results = None
+    expected = None
+    rsquared_score = None
+    if get_train_error:
+        results = lasso_model.predict(np.array(inputs))
+        rsquared_score = lasso_model.score(np.array(inputs), np.array(outputs))
+        expected = outputs
+    return results, expected, rsquared_score
+
 def test_model(lasso_model, testing_data, util):
     artist_mapping, num_artists = util.get_artist_feature_info()
 
@@ -46,8 +58,10 @@ def test_model(lasso_model, testing_data, util):
     for data in testing_data:
         feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
         feature_vector += MetadataUtil.prepare_metadata_features(data, use_json=util.use_json)
+
         if settings.USE_ARTIST_LIFESPAN:
             feature_vector.append(util.get_artist_lifespan(artist_name=data[settings.ARTIST_NAME_INDEX]))
+
         if settings.USE_NUM_POPULAR:
             if not util.use_json:
                 feature_vector.append(util.get_num_popular_songs(artist_name=data[settings.ARTIST_NAME_INDEX]))
@@ -68,16 +82,21 @@ def test_model(lasso_model, testing_data, util):
 def run_basic_features():
     """ Runs a lasso regression model on basic metadata features """
 
-    print 'Preparing data with basic features...'
+    print '\nPreparing data with basic features...'
     util = MetadataUtil(use_json=True)
     training_set, testing_set = util.get_datasets()
-    testing_set = training_set
+    #testing_set = training_set
 
     print 'Training lasso model...'
     lasso_model = Lasso()
-    train_model(lasso_model, training_set, util)
+    train_predicted, train_expected, train_rscore = train_model(lasso_model, training_set, util, get_train_error=True)
 
-    print 'Testing lasso model...'
+    analysis = AnalysisUtil(train_predicted, train_expected)
+    accuracy = analysis.percentage_accuracy()
+    print '\nPredictor achieved a training error of {}'.format(accuracy)
+    print '\nR^2 score calculated by sklearn: {}'.format(train_rscore)
+
+    print '\nTesting lasso model...'
     predicted, expected, rsquared = test_model(lasso_model, testing_set, util)
 
     analysis = AnalysisUtil(predicted, expected)
@@ -97,7 +116,12 @@ def run_features_with_lifespans():
 
     print 'Training lasso model...'
     lasso_model = Lasso()
-    train_model(lasso_model, training_set, util)
+    train_predicted, train_expected, train_rscore = train_model(lasso_model, training_set, util, get_train_error=True)
+
+    analysis = AnalysisUtil(train_predicted, train_expected)
+    accuracy = analysis.percentage_accuracy()
+    print '\nPredictor achieved a training error of {}'.format(accuracy)
+    print '\nR^2 score calculated by sklearn: {}'.format(train_rscore)
 
     print 'Testing lasso model...'
     predicted, expected, rsquared = test_model(lasso_model, testing_set, util)
@@ -113,13 +137,18 @@ def run_features_with_lifespans():
 def run_features_with_num_popular():
     """ Runs a lasso regression model with features including num popular songs """
 
-    print 'Preparing data with artist lifespan feature...'
-    util = MetadataUtil(use_json=True)
+    print '\n\nPreparing data with num popular songs feature...'
+    util = MetadataUtil(use_json=False)
     training_set, testing_set = util.get_datasets()
 
     print 'Training lasso model...'
     lasso_model = Lasso()
-    train_model(lasso_model, training_set, util)
+    train_predicted, train_expected, train_rscore = train_model(lasso_model, training_set, util, get_train_error=True)
+
+    analysis = AnalysisUtil(train_predicted, train_expected)
+    accuracy = analysis.percentage_accuracy()
+    print '\nPredictor achieved a training error of {}'.format(accuracy)
+    print '\nR^2 score calculated by sklearn: {}'.format(train_rscore)
 
     print 'Testing lasso model...'
     predicted, expected, rsquared = test_model(lasso_model, testing_set, util)
