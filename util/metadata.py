@@ -14,7 +14,8 @@ import sqlite3
 class MetadataUtil(object):
     """ Queries for song metadata """
 
-    def __init__(self, use_json=False):
+    def __init__(self, features, use_json=False):
+        self.features = features
         self.use_json = use_json
         if not self.use_json:
             self.db = sqlite3.connect(settings.SONGS_DB)
@@ -139,7 +140,7 @@ class MetadataUtil(object):
         return feature_vector
 
     @classmethod
-    def prepare_metadata_features(cls, data, use_json=False):
+    def prepare_metadata_features(cls, data, features, use_json=False):
         result = []
         if use_json:
             feature_dict = data[1]
@@ -149,5 +150,7 @@ class MetadataUtil(object):
                     result.append(value)
         else:
             for index in settings.FEATURE_INDICES:
-                result.append(data[index])
+                if features[index]:
+                    result.append(data[index])
+
         return result

@@ -2,13 +2,16 @@
 Implements linear regression with L1 penalty
 """
 
-from sklearn.linear_model import Lasso
+#from sklearn.linear_model import Lasso
 #from sklearn.linear_model import LinearRegression as Lasso
 import numpy as np
+import sys
 
 import config.settings as settings
 from util.metadata import MetadataUtil
 from util.analysis import AnalysisUtil
+
+settings.FEATURES = {feature: True for feature in settings.FEATURE_INDICES}
 
 settings.USE_ARTIST_LIFESPAN = False
 settings.USE_NUM_POPULAR = False
@@ -21,7 +24,7 @@ def train_model(lasso_model, training_set, util, get_train_error=False):
     inputs = []
     for data in training_set:
         feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
-        feature_vector += MetadataUtil.prepare_metadata_features(data, use_json=util.use_json)
+        feature_vector += MetadataUtil.prepare_metadata_features(data, settings.FEATURES, use_json=util.use_json)
 
         if settings.USE_ARTIST_LIFESPAN:
             feature_vector.append(util.get_artist_lifespan(artist_name=data[settings.ARTIST_NAME_INDEX]))
@@ -57,7 +60,7 @@ def test_model(lasso_model, testing_data, util):
     inputs = []
     for data in testing_data:
         feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
-        feature_vector += MetadataUtil.prepare_metadata_features(data, use_json=util.use_json)
+        feature_vector += MetadataUtil.prepare_metadata_features(data, settings.FEATURES, use_json=util.use_json)
 
         if settings.USE_ARTIST_LIFESPAN:
             feature_vector.append(util.get_artist_lifespan(artist_name=data[settings.ARTIST_NAME_INDEX]))
@@ -83,12 +86,12 @@ def run_basic_features():
     """ Runs a lasso regression model on basic metadata features """
 
     print '\nPreparing data with basic features...'
-    util = MetadataUtil(use_json=True)
+    util = MetadataUtil(settings.FEATURES, use_json=False)
     training_set, testing_set = util.get_datasets()
     #testing_set = training_set
 
     print 'Training lasso model...'
-    lasso_model = Lasso()
+    lasso_model = Learner()
     train_predicted, train_expected, train_rscore = train_model(lasso_model, training_set, util, get_train_error=True)
 
     analysis = AnalysisUtil(train_predicted, train_expected)
@@ -111,11 +114,11 @@ def run_features_with_lifespans():
     """ Runs a lasso regression model with features including artist lifespan """
 
     print 'Preparing data with artist lifespan feature...'
-    util = MetadataUtil(use_json=False)
+    util = MetadataUtil(settings.FEATURES, use_json=False)
     training_set, testing_set = util.get_datasets()
 
     print 'Training lasso model...'
-    lasso_model = Lasso()
+    lasso_model = Learner()
     train_predicted, train_expected, train_rscore = train_model(lasso_model, training_set, util, get_train_error=True)
 
     analysis = AnalysisUtil(train_predicted, train_expected)
@@ -138,11 +141,11 @@ def run_features_with_num_popular():
     """ Runs a lasso regression model with features including num popular songs """
 
     print '\n\nPreparing data with num popular songs feature...'
-    util = MetadataUtil(use_json=False)
+    util = MetadataUtil(settings.FEATURES, use_json=False)
     training_set, testing_set = util.get_datasets()
 
     print 'Training lasso model...'
-    lasso_model = Lasso()
+    lasso_model = Learner()
     train_predicted, train_expected, train_rscore = train_model(lasso_model, training_set, util, get_train_error=True)
 
     analysis = AnalysisUtil(train_predicted, train_expected)
@@ -162,6 +165,14 @@ def run_features_with_num_popular():
     util.__teardown__()
 
 if __name__ == '__main__':
+
+    if len(sys.argv) > 1 and sys.argv[1] == '-lasso':
+        from sklearn.linear_model import Lasso as Learner
+        print 'Running linear regression with L1 penalty\n\n'
+    else:
+        from sklearn.linear_model import LinearRegression as Learner
+        print 'Running normal linear regression\n\n'
+
     run_basic_features()
 
     settings.USE_ARTIST_LIFESPAN = True

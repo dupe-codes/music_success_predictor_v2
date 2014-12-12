@@ -8,7 +8,7 @@ SONGS_DB = 'data/usable_songs.db'
 
 LYRICS_TABLE = 'lyrics'
 SONGDATA_TABLE = 'songs'
-OURDATA_TABLE = 'good_songs'
+OURDATA_TABLE = 'good_songs_v2'
 
 JSON_DATA_PATH = 'data/json/song_data.json'
 
@@ -22,9 +22,6 @@ FEATURE_INDICES = [
     8,
     9,
     10,
-]
-
-"""
     15,
     16,
     17,
@@ -32,7 +29,17 @@ FEATURE_INDICES = [
     19,
     20,
 ]
-"""
+
+DURATION = 7
+ARTIST_FAMILIARITY = 8
+ARTIST_HOTTTNESSS = 9
+YEAR = 10
+TEMPO = 15
+DANCEABILITY = 16
+ENERGY = 17
+LOUDNESS = 18
+KEY = 19
+TIME_SIGNATURE = 20
 
 SONG_FEATURES = [
     'tempo',
