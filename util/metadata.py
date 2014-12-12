@@ -56,7 +56,7 @@ class MetadataUtil(object):
     def get_datasets(self):
         """ Returns sets to be used as training and testing sets """
         if not self.use_json:
-            query = ' '.join(['SELECT * FROM', settings.OURDATA_TABLE])
+            query = ' '.join(['SELECT * FROM', settings.OURDATA_TABLE, 'WHERE song_hotttnesss > 0'])
             response = self.db.execute(query)
             songs = response.fetchall()
         else:
@@ -67,6 +67,14 @@ class MetadataUtil(object):
         train_data = songs[:partition_point]
         test_data = songs[partition_point+1:]
         return  train_data, test_data
+
+    def get_hotttnesss_scores(self):
+        if not self.use_json:
+            query = ' '.join(['SELECT song_hotttnesss FROM', settings.OURDATA_TABLE, 'WHERE song_hotttnesss > 0'])
+            response = self.db.execute(query)
+            hotttnesss = response.fetchall()
+            hotttnesss = [value[0] for value in hotttnesss]
+        return hotttnesss
 
     def get_artist_lifespan(self, artist_name=None, artist_id=None):
         """ Gets the lifespan of a given artist """

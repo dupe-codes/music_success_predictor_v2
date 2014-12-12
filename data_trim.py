@@ -8,7 +8,10 @@ import requests
 import time
 
 import config.settings as settings
+from util import api_calls
 from types import UnicodeType
+
+
 from pyechonest import config
 from pyechonest import song as SongAPI
 config.ECHO_NEST_API_KEY = settings.API_KEY
@@ -56,7 +59,8 @@ def get_metadata(song_name, artist_name):
         audio_summary['energy'],
         audio_summary['loudness'],
         audio_summary['key'],
-        audio_summary['time_signature']
+        audio_summary['time_signature'],
+        api_calls.get_artist_genre(artist_name),
     )
 
 def migrate_songs(metadata_db, possible_songs):

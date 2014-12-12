@@ -11,7 +11,8 @@ import config.settings as settings
 from util.metadata import MetadataUtil
 from util.analysis import AnalysisUtil
 
-settings.FEATURES = {feature: True for feature in settings.FEATURE_INDICES}
+settings.FEATURES = {feature: False for feature in settings.FEATURE_INDICES}
+settings.FEATURES[settings.YEAR] = True
 
 settings.USE_ARTIST_LIFESPAN = False
 settings.USE_NUM_POPULAR = False
@@ -23,7 +24,8 @@ def train_model(lasso_model, training_set, util, get_train_error=False):
     # First prepare input feature vectors
     inputs = []
     for data in training_set:
-        feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
+        feature_vector = []
+        #feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
         feature_vector += MetadataUtil.prepare_metadata_features(data, settings.FEATURES, use_json=util.use_json)
 
         if settings.USE_ARTIST_LIFESPAN:
@@ -44,6 +46,10 @@ def train_model(lasso_model, training_set, util, get_train_error=False):
 
     lasso_model.fit(np.array(inputs), np.array(outputs))
 
+    print 'Lasso model assigned following weights: '
+    print lasso_model.coef_
+    print '\n'
+
     # Run on training data to get training error
     results = None
     expected = None
@@ -59,7 +65,8 @@ def test_model(lasso_model, testing_data, util):
 
     inputs = []
     for data in testing_data:
-        feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
+        feature_vector = []
+        #feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
         feature_vector += MetadataUtil.prepare_metadata_features(data, settings.FEATURES, use_json=util.use_json)
 
         if settings.USE_ARTIST_LIFESPAN:

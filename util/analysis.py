@@ -4,7 +4,7 @@ Defines an analysis class to analyze algorithm results
 
 class AnalysisUtil(object):
 
-    def __init__(self, expected, predicted, threshold=0.05):
+    def __init__(self, expected, predicted, threshold=0.30):
         """
         Initializes object to analyze given data
 
@@ -28,8 +28,14 @@ class AnalysisUtil(object):
         for index in range(len(self.predicted)):
             predicted = self.predicted[index]
             expected = self.expected[index]
-            if abs(predicted - expected) < self.threshold:
+            closeness = abs(float(predicted - expected)/expected)
+            """
+            print 'Predicted: ' + str(predicted)
+            print 'Expected: ' + str(expected)
+            print 'Closeness: ' + str(closeness)
+            stuff = raw_input()
+            """
+            if closeness < self.threshold:
                 numCorrect += 1
 
         return 100*(float(numCorrect)/len(self.predicted))
-

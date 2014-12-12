@@ -9,7 +9,8 @@ import config.settings as settings
 from util.metadata import MetadataUtil
 from util.analysis import AnalysisUtil
 
-settings.FEATURES = {feature: True for feature in settings.FEATURE_INDICES}
+settings.FEATURES = {feature: False for feature in settings.FEATURE_INDICES}
+settings.FEATURES[settings.YEAR] = True
 
 settings.USE_ARTIST_LIFESPAN = False
 

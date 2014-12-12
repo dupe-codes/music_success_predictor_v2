@@ -8,7 +8,7 @@ SONGS_DB = 'data/usable_songs.db'
 
 LYRICS_TABLE = 'lyrics'
 SONGDATA_TABLE = 'songs'
-OURDATA_TABLE = 'good_songs_v2'
+OURDATA_TABLE = 'good_songs_v3'
 
 JSON_DATA_PATH = 'data/json/song_data.json'
 
@@ -93,3 +93,5 @@ GENRES = [
     'pop rock',
     'progressive metal',
 ]
+
+GENRE_API_ENDPOINT = 'http://developer.echonest.com/api/v4/artist/terms'
