@@ -102,3 +102,19 @@ Done
         Lasso predictor with basic features achieved accuracy of 42.5307557118%
         R^2 score calculated by sklearn: 0.242013706387
         Done
+
+- Lin reg run with duration, year, + genres:
+    Ratio of popular songs correctly predicted: 0.0
+    Ratio of unpopular songs correctly predicted: 1.0
+
+- Average mean hotttnesss performs just as well LOL our features dont tell us shit
+    Predictor achieved a training error of 38.208168643
+
+    R^2 score calculated by sklearn: None
+
+    Testing lasso model...
+    Lasso predictor with basic features achieved accuracy of 39.0597539543%
+    R^2 score calculated by sklearn: 0
+
+    Ratio of popular songs correctly predicted: 0.0
+    Ratio of unpopular songs correctly predicted: 1.0

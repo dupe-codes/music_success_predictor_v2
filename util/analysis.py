@@ -2,9 +2,14 @@
 Defines an analysis class to analyze algorithm results
 """
 
+import sys
+sys.path.append('./config/')
+import settings
+
+
 class AnalysisUtil(object):
 
-    def __init__(self, expected, predicted, threshold=0.30):
+    def __init__(self, predicted, expected, threshold=0.30):
         """
         Initializes object to analyze given data
 
@@ -39,3 +44,23 @@ class AnalysisUtil(object):
                 numCorrect += 1
 
         return 100*(float(numCorrect)/len(self.predicted))
+
+    def precision_recall_analysis(self):
+        popular = [expected >= settings.POPULAR_SONG_THRESHOLD for expected in self.expected]
+
+        correctly_predicted_popular = 0
+        total_popular = 0
+        correctly_predicted_unpopular = 0
+        total_unpopular = 0
+        for index, prediction in enumerate(self.predicted):
+            if popular[index]:
+                total_popular += 1
+            else:
+                total_unpopular += 1
+
+            if prediction >= settings.POPULAR_SONG_THRESHOLD and popular[index]:
+                correctly_predicted_popular += 1
+            elif prediction < settings.POPULAR_SONG_THRESHOLD and not popular[index]:
+                correctly_predicted_unpopular += 1
+
+        return float(correctly_predicted_popular)/total_popular, float(correctly_predicted_unpopular)/total_unpopular

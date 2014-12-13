@@ -9,9 +9,9 @@ import config.settings as settings
 from util.metadata import MetadataUtil
 from util.analysis import AnalysisUtil
 
-settings.FEATURES = {feature: True for feature in settings.FEATURE_INDICES}
-settings.FEATURES[settings.DURATION] = True
-settings.FEATURES[settings.YEAR] = True
+settings.FEATURES = {feature: False for feature in settings.FEATURE_INDICES}
+settings.FEATURES[settings.DURATION] = False
+settings.FEATURES[settings.YEAR] = False
 
 settings.USE_ARTIST_LIFESPAN = False
 settings.USE_NUM_POPULAR = False
@@ -26,8 +26,8 @@ def train_model(lasso_model, training_set, util, get_train_error=False):
     for data in training_set:
         feature_vector = []
         #feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
-        feature_vector += MetadataUtil.prepare_metadata_features(data, settings.FEATURES, use_json=util.use_json)
-        #feature_vector += MetadataUtil.prepare_genre_feature_vec(data, genre_mapping, num_genres, use_json=util.use_json)
+        #feature_vector += MetadataUtil.prepare_metadata_features(data, settings.FEATURES, use_json=util.use_json)
+        feature_vector += MetadataUtil.prepare_genre_feature_vec(data, genre_mapping, num_genres, use_json=util.use_json)
 
         if settings.USE_ARTIST_LIFESPAN:
             feature_vector.append(util.get_artist_lifespan(artist_name=data[settings.ARTIST_NAME_INDEX]))
@@ -45,23 +45,28 @@ def train_model(lasso_model, training_set, util, get_train_error=False):
     else:
         outputs = [data[settings.HOTTTNESSS_INDEX] for data in training_set]
 
-    lasso_model.fit(np.array(inputs), np.array(outputs))
+    #lasso_model.fit(np.array(inputs), np.array(outputs))
 
+    """
     print 'Lasso model assigned following weights: '
     print lasso_model.coef_
     print '\n'
+    """
+    average = sum(outputs)/float(len(outputs))
 
     # Run on training data to get training error
+    average_hotttnesss = util.get_average_hotttnesss()
     results = None
     expected = None
     rsquared_score = None
     if get_train_error:
-        results = lasso_model.predict(np.array(inputs))
-        rsquared_score = lasso_model.score(np.array(inputs), np.array(outputs))
+        #results = lasso_model.predict(np.array(inputs))
+        results = [average for x in inputs]
+        #rsquared_score = lasso_model.score(np.array(inputs), np.array(outputs))
         expected = outputs
-    return results, expected, rsquared_score
+    return results, expected, rsquared_score, average
 
-def test_model(lasso_model, testing_data, util):
+def test_model(lasso_model, testing_data, util, average):
     artist_mapping, num_artists = util.get_artist_feature_info()
     genre_mapping, num_genres = util.get_genre_feature_info()
 
@@ -69,8 +74,8 @@ def test_model(lasso_model, testing_data, util):
     for data in testing_data:
         feature_vector = []
         #feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
-        feature_vector += MetadataUtil.prepare_metadata_features(data, settings.FEATURES, use_json=util.use_json)
-        #feature_vector += MetadataUtil.prepare_genre_feature_vec(data, genre_mapping, num_genres, use_json=util.use_json)
+        #feature_vector += MetadataUtil.prepare_metadata_features(data, settings.FEATURES, use_json=util.use_json)
+        feature_vector += MetadataUtil.prepare_genre_feature_vec(data, genre_mapping, num_genres, use_json=util.use_json)
 
         if settings.USE_ARTIST_LIFESPAN:
             feature_vector.append(util.get_artist_lifespan(artist_name=data[settings.ARTIST_NAME_INDEX]))
@@ -88,8 +93,13 @@ def test_model(lasso_model, testing_data, util):
     else:
         expected = [data[settings.HOTTTNESSS_INDEX] for data in testing_data]
 
-    results = lasso_model.predict(np.array(inputs))
-    rsquared_score = lasso_model.score(np.array(inputs), np.array(expected))
+    #results = lasso_model.predict(np.array(inputs))
+    results = [average for x in inputs]
+    average_hotttnesss_score = util.get_average_hotttnesss()
+    #results = [average_hotttnesss_score for x in inputs]
+    #rsquared_score = lasso_model.score(np.array(inputs), np.array(expected))
+    rsquared_score = 0
+
     return results, expected, rsquared_score
 
 def run_basic_features():
@@ -105,7 +115,7 @@ def run_basic_features():
         lasso_model = Learner(fit_intercept=True, normalize=False, alpha=0.5)
     else:
         lasso_model = Learner()
-    train_predicted, train_expected, train_rscore = train_model(lasso_model, training_set, util, get_train_error=True)
+    train_predicted, train_expected, train_rscore, average = train_model(lasso_model, training_set, util, get_train_error=True)
 
     analysis = AnalysisUtil(train_predicted, train_expected)
     accuracy = analysis.percentage_accuracy()
@@ -113,14 +123,18 @@ def run_basic_features():
     print '\nR^2 score calculated by sklearn: {}'.format(train_rscore)
 
     print '\nTesting lasso model...'
-    predicted, expected, rsquared = test_model(lasso_model, testing_set, util)
+    predicted, expected, rsquared = test_model(lasso_model, testing_set, util, average)
 
     analysis = AnalysisUtil(predicted, expected)
     accuracy = analysis.percentage_accuracy()
     print 'Lasso predictor with basic features achieved accuracy of {}%'.format(accuracy)
     print 'R^2 score calculated by sklearn: {}'.format(rsquared)
 
-    print 'Done'
+    correct_ratio_popular, correct_ratio_unpopular = analysis.precision_recall_analysis()
+    print '\nRatio of popular songs correctly predicted: ' + str(correct_ratio_popular)
+    print 'Ratio of unpopular songs correctly predicted: ' + str(correct_ratio_unpopular)
+
+    print '\nDone'
     util.__teardown__()
 
 def run_features_with_lifespans():

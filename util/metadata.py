@@ -7,6 +7,7 @@ song metadata
 import sys
 sys.path.append('./config/')
 
+import random
 import settings
 import json
 import sqlite3
@@ -66,6 +67,7 @@ class MetadataUtil(object):
             songs = song_data['song_data']
 
         partition_point = int(len(songs)*settings.PERCENT_TRAIN)
+        random.shuffle(songs)
         train_data = songs[:partition_point]
         test_data = songs[partition_point+1:]
         return  train_data, test_data
@@ -77,6 +79,13 @@ class MetadataUtil(object):
             hotttnesss = response.fetchall()
             hotttnesss = [value[0] for value in hotttnesss]
         return hotttnesss
+
+    def get_average_hotttnesss(self):
+        query = ' '.join(['SELECT song_hotttnesss FROM', settings.OURDATA_TABLE, settings.FILTER])
+        response = self.db.execute(query)
+        hotttnesss = response.fetchall()
+        hotttnesss = [value[0] for value in hotttnesss]
+        return sum(hotttnesss)/float(len(hotttnesss))
 
     def get_artist_hotttnesss_scores(self):
         if not self.use_json:
