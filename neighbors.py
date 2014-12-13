@@ -11,18 +11,23 @@ from util.analysis import AnalysisUtil
 
 settings.FEATURES = {feature: False for feature in settings.FEATURE_INDICES}
 settings.FEATURES[settings.YEAR] = True
+settings.FEATURES[settings.DURATION] = True
 
 settings.USE_ARTIST_LIFESPAN = False
 
 def train_model(neighbors_model, training_set, util, get_train_error=False):
     # Grab info for artist indicator features
     artist_mapping, num_artists = util.get_artist_feature_info()
+    genre_mapping, num_genres = util.get_genre_feature_info()
 
     # First prepare input feature vectors
     inputs = []
     for data in training_set:
-        feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
+        #feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
+        feature_vector = []
         feature_vector += MetadataUtil.prepare_metadata_features(data, settings.FEATURES, use_json=util.use_json)
+        #feature_vector += MetadataUtil.prepare_genre_feature_vec(data, genre_mapping, num_genres, use_json=util.use_json)
+
         if settings.USE_ARTIST_LIFESPAN:
             feature_vector.append(util.get_artist_lifespan(artist_name=data[settings.ARTIST_NAME_INDEX]))
         inputs.append(feature_vector)
@@ -45,11 +50,15 @@ def train_model(neighbors_model, training_set, util, get_train_error=False):
 
 def test_model(neighbors_model, testing_data, util):
     artist_mapping, num_artists = util.get_artist_feature_info()
+    genre_mapping, num_genres = util.get_genre_feature_info()
 
     inputs = []
     for data in testing_data:
-        feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
+        feature_vector = []
+        #feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
         feature_vector += MetadataUtil.prepare_metadata_features(data, settings.FEATURES, use_json=util.use_json)
+        #feature_vector += MetadataUtil.prepare_genre_feature_vec(data, genre_mapping, num_genres, use_json=util.use_json)
+
         if settings.USE_ARTIST_LIFESPAN:
             feature_vector.append(util.get_artist_lifespan(artist_name=data[settings.ARTIST_NAME_INDEX]))
 
@@ -121,5 +130,5 @@ def run_features_with_lifespans():
 if __name__ == '__main__':
     run_basic_features()
 
-    settings.USE_ARTIST_LIFESPAN = True
-    run_features_with_lifespans()
+    #settings.USE_ARTIST_LIFESPAN = True
+    #run_features_with_lifespans()

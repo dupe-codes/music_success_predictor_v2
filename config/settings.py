@@ -16,6 +16,7 @@ API_KEY = '0AUAGZNQLKRLAILXK'
 
 ARTIST_NAME_INDEX = 6
 HOTTTNESSS_INDEX = 14
+GENRE_INDEX = 21
 
 FEATURE_INDICES = [
     7,
@@ -59,7 +60,7 @@ PERCENT_TEST = 0.30
 NUM_NEIGHBORS = 8
 # Changing this led to slight changes
 
-POPULAR_SONG_THRESHOLD = 0.6
+POPULAR_SONG_THRESHOLD = 0.4
 # NOTE: Changing this doesn't seem to affect anything
 
 GENRES = [
@@ -93,5 +94,6 @@ GENRES = [
     'pop rock',
     'progressive metal',
 ]
+
 
 GENRE_API_ENDPOINT = 'http://developer.echonest.com/api/v4/artist/terms'

@@ -2,8 +2,6 @@
 Implements linear regression with L1 penalty
 """
 
-#from sklearn.linear_model import Lasso
-#from sklearn.linear_model import LinearRegression as Lasso
 import numpy as np
 import sys
 
@@ -11,7 +9,8 @@ import config.settings as settings
 from util.metadata import MetadataUtil
 from util.analysis import AnalysisUtil
 
-settings.FEATURES = {feature: False for feature in settings.FEATURE_INDICES}
+settings.FEATURES = {feature: True for feature in settings.FEATURE_INDICES}
+settings.FEATURES[settings.DURATION] = True
 settings.FEATURES[settings.YEAR] = True
 
 settings.USE_ARTIST_LIFESPAN = False
@@ -20,6 +19,7 @@ settings.USE_NUM_POPULAR = False
 def train_model(lasso_model, training_set, util, get_train_error=False):
     # Grab info for artist indicator features
     artist_mapping, num_artists = util.get_artist_feature_info()
+    genre_mapping, num_genres = util.get_genre_feature_info()
 
     # First prepare input feature vectors
     inputs = []
@@ -27,6 +27,7 @@ def train_model(lasso_model, training_set, util, get_train_error=False):
         feature_vector = []
         #feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
         feature_vector += MetadataUtil.prepare_metadata_features(data, settings.FEATURES, use_json=util.use_json)
+        #feature_vector += MetadataUtil.prepare_genre_feature_vec(data, genre_mapping, num_genres, use_json=util.use_json)
 
         if settings.USE_ARTIST_LIFESPAN:
             feature_vector.append(util.get_artist_lifespan(artist_name=data[settings.ARTIST_NAME_INDEX]))
@@ -62,12 +63,14 @@ def train_model(lasso_model, training_set, util, get_train_error=False):
 
 def test_model(lasso_model, testing_data, util):
     artist_mapping, num_artists = util.get_artist_feature_info()
+    genre_mapping, num_genres = util.get_genre_feature_info()
 
     inputs = []
     for data in testing_data:
         feature_vector = []
         #feature_vector = MetadataUtil.prepare_artist_feature_vec(data, artist_mapping, num_artists, use_json=util.use_json)
         feature_vector += MetadataUtil.prepare_metadata_features(data, settings.FEATURES, use_json=util.use_json)
+        #feature_vector += MetadataUtil.prepare_genre_feature_vec(data, genre_mapping, num_genres, use_json=util.use_json)
 
         if settings.USE_ARTIST_LIFESPAN:
             feature_vector.append(util.get_artist_lifespan(artist_name=data[settings.ARTIST_NAME_INDEX]))
@@ -98,7 +101,10 @@ def run_basic_features():
     #testing_set = training_set
 
     print 'Training lasso model...'
-    lasso_model = Learner()
+    if settings.USE_LASSO:
+        lasso_model = Learner(fit_intercept=True, normalize=False, alpha=0.5)
+    else:
+        lasso_model = Learner()
     train_predicted, train_expected, train_rscore = train_model(lasso_model, training_set, util, get_train_error=True)
 
     analysis = AnalysisUtil(train_predicted, train_expected)
@@ -172,19 +178,20 @@ def run_features_with_num_popular():
     util.__teardown__()
 
 if __name__ == '__main__':
-
     if len(sys.argv) > 1 and sys.argv[1] == '-lasso':
         from sklearn.linear_model import Lasso as Learner
         print 'Running linear regression with L1 penalty\n\n'
+        settings.USE_LASSO = True
     else:
         from sklearn.linear_model import LinearRegression as Learner
         print 'Running normal linear regression\n\n'
+        settings.USE_LASSO = False
 
     run_basic_features()
 
     settings.USE_ARTIST_LIFESPAN = True
-    run_features_with_lifespans()
+    #run_features_with_lifespans()
 
     settings.USE_ARTIST_LIFESPAN = False
     settings.USE_NUM_POPULAR = True
-    run_features_with_num_popular()
+    #run_features_with_num_popular()

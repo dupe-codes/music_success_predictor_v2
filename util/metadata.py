@@ -11,6 +11,8 @@ import settings
 import json
 import sqlite3
 
+settings.FILTER = 'WHERE song_hotttnesss > 0 and year > 0 and artist_hotttnesss > 0'
+
 class MetadataUtil(object):
     """ Queries for song metadata """
 
@@ -27,7 +29,7 @@ class MetadataUtil(object):
 
     def get_artist_feature_info(self):
         """
-        Returns info for creating artist indicator features 
+        Returns info for creating artist indicator features
 
         Returns a tuple of ({artist_name: index}, number of artists)
         """
@@ -56,7 +58,7 @@ class MetadataUtil(object):
     def get_datasets(self):
         """ Returns sets to be used as training and testing sets """
         if not self.use_json:
-            query = ' '.join(['SELECT * FROM', settings.OURDATA_TABLE, 'WHERE song_hotttnesss > 0'])
+            query = ' '.join(['SELECT * FROM', settings.OURDATA_TABLE, settings.FILTER])
             response = self.db.execute(query)
             songs = response.fetchall()
         else:
@@ -70,7 +72,15 @@ class MetadataUtil(object):
 
     def get_hotttnesss_scores(self):
         if not self.use_json:
-            query = ' '.join(['SELECT song_hotttnesss FROM', settings.OURDATA_TABLE, 'WHERE song_hotttnesss > 0'])
+            query = ' '.join(['SELECT song_hotttnesss FROM', settings.OURDATA_TABLE, settings.FILTER])
+            response = self.db.execute(query)
+            hotttnesss = response.fetchall()
+            hotttnesss = [value[0] for value in hotttnesss]
+        return hotttnesss
+
+    def get_artist_hotttnesss_scores(self):
+        if not self.use_json:
+            query = ' '.join(['SELECT artist_hotttnesss FROM', settings.OURDATA_TABLE, settings.FILTER])
             response = self.db.execute(query)
             hotttnesss = response.fetchall()
             hotttnesss = [value[0] for value in hotttnesss]
@@ -120,13 +130,54 @@ class MetadataUtil(object):
                         num_popular += 1
             return num_popular
 
-    def get_genre_counts(self):
-        song_data = self._load_json_data()['song_data']
-        genre_counts = {genre: 0 for genre in settings.GENRES}
-        for song in song_data:
-            genre = song[1]['genre']
-            genre_counts[genre] += 1
-        return genre_counts
+    def get_genre_statistics(self):
+        query = ' '.join(['SELECT genre, song_hotttnesss FROM', settings.OURDATA_TABLE, settings.FILTER])
+        response = self.db.execute(query)
+        genres = response.fetchall()
+
+        query = ' '.join(['SELECT genre, count(genre) AS test_value FROM', settings.OURDATA_TABLE, 'GROUP BY genre ORDER BY test_value'])
+        response = self.db.execute(query)
+        genre_counts = response.fetchall()
+
+        cutoff = 40
+        valid_genres = [value[0] for value in genre_counts if value[1] >= cutoff]
+
+        genre_stats = {}
+        for genre_name, song_hotttnesss in genres:
+            if genre_name not in valid_genres: continue
+            # AHHHH WHY
+            if genre_name in genre_stats:
+                stats = genre_stats[genre_name]
+                if song_hotttnesss >= settings.POPULAR_SONG_THRESHOLD:
+                    stats['popular'] += 1
+                else:
+                    stats['unpopular'] += 1
+                genre_stats[genre_name] = stats
+            else:
+                if song_hotttnesss >= settings.POPULAR_SONG_THRESHOLD:
+                    stats = { 'popular': 1, 'unpopular': 0 }
+                else:
+                    stats = { 'popular': 0, 'unpopular': 1 }
+                genre_stats[genre_name] = stats
+
+        return genre_stats
+
+    def get_genre_feature_info(self):
+        if self.use_json:
+            return None, 0
+        else:
+            query = ' '.join(['SELECT genre FROM', settings.OURDATA_TABLE])
+            response = self.db.execute(query)
+            genres = response.fetchall()
+
+            genre_mapping = {}
+            index = 0
+            for genre in genres:
+                genre_name = genre[0]
+                if genre_name in genre_mapping: continue
+                genre_mapping[genre_name] = index
+                index += 1
+            return genre_mapping, len(genre_mapping)
 
     def _load_json_data(self):
         """ Returns song data loaded from the json file """
@@ -162,3 +213,14 @@ class MetadataUtil(object):
                     result.append(data[index])
 
         return result
+
+    @classmethod
+    def prepare_genre_feature_vec(cls, data, genre_mapping, num_genres, use_json=False):
+        genre_vector = [0]*num_genres
+        if not use_json:
+            genre = data[settings.GENRE_INDEX]
+            if genre in genre_mapping:
+                genre_vector[genre_mapping[genre]] = 1
+        else:
+            pass
+        return genre_vector

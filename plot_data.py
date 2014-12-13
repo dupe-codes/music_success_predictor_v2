@@ -13,6 +13,7 @@ py.sign_in('Python-Demo-Account', 'gwt101uhh0')
 
 
 if __name__ == '__main__':
+
     util = MetadataUtil({})
     hotttnesss = util.get_hotttnesss_scores()
 
